@@ -1,3 +1,4 @@
+b
 #include <iostream>
 #include <ctime>
 #include <locale>
