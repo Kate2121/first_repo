@@ -1,0 +1,141 @@
+#include <iostream>
+#include <ctime>
+#include <locale>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
+struct employee
+{
+    char surname[20];
+    char name[20];
+    char patronymic[20];
+    int bdate[3];
+    int division;
+    char position[20];    
+};
+
+ 
+int main()
+{
+    int result;
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    int year = ltm->tm_year + 1900;
+    int month = ltm->tm_mon + 1;
+    int day = ltm->tm_mday;
+    int numbers;
+    while (numbers<=0){
+        cout << "Введите количество сотрудников:" << endl;
+        cin >> numbers;
+        if (numbers<=0){
+            cout << "Введите число больше 0" << endl;
+        }
+    }
+ 
+    employee* employees = new employee[numbers];
+    
+    for (int i = 0; i < numbers; i++)
+    {
+        cout << "\nВведите фамилию:";
+        cin >> employees[i].surname;
+ 
+        cout << "Введите имя:";
+        cin >> employees[i].name;
+ 
+        cout << "Введите отчество:";
+        cin >> employees[i].patronymic;
+        
+        bool correct = false;
+        
+        while (correct != true) {
+            cout << "Введите дату рождения в формате ДД.ММ.ГГГГ: ";
+            cin >> employees[i].bdate[0];
+            cin.ignore(1, '.');
+            cin >> employees[i].bdate[1];
+            cin.ignore(1, '.');
+            cin >> employees[i].bdate[2];
+            if (employees[i].bdate[0] < 1 || employees[i].bdate[1] < 1 || employees[i].bdate[1] > 12 || employees[i].bdate[2] < 1 || employees[i].bdate[2] > year  || (employees[i].bdate[2] == year && employees[i].bdate[1] > month) || (employees[i].bdate[2] == year && employees[i].bdate[1] == month && employees[i].bdate[0] > day)) {
+                cout << "Введите корректные данные" << endl;
+            } else if ((employees[i].bdate[1] == 2 && employees[i].bdate[2] % 4 != 0 && employees[i].bdate[0] > 28 ) || (employees[i].bdate[1] == 2 && employees[i].bdate[2] % 4 == 0 && employees[i].bdate[0] > 29)) {
+                cout << "Введите корректные данные" << endl;
+            } else if ((employees[i].bdate[1] == 1 || employees[i].bdate[1] == 3 || employees[i].bdate[1] == 5 || employees[i].bdate[1] == 7 || employees[i].bdate[1] == 8 || employees[i].bdate[1] == 10 || employees[i].bdate[1] == 12) && employees[i].bdate[0] > 31) {
+                cout << "Введите корректные данные" << endl;
+            } else if ((employees[i].bdate[1] == 4 || employees[i].bdate[1] == 6 || employees[i].bdate[1] == 9 || employees[i].bdate[1] == 11) && employees[i].bdate[0] > 30) {
+                cout << "Введите корректные данные" << endl;
+            } else {
+                correct = true;
+            }
+        }
+
+        do{
+            cout << "Введите номер отдела:";
+            result = scanf ("%d", &employees[i].division);
+            while (getchar()!='\n');
+        }while (result!=1);
+        
+        cout << "Введите должность:";
+        cin >> employees[i].position;
+        
+    }
+      
+    /*Задание 1
+    Вывести на экран ФИО и должности всех сотрудников,
+    работающих в заданном отделе
+    (номер отдела вводится с клавиатуры)*/
+        
+    int find_division;
+    do{
+            cout << "\nВведите номер искомого отдела:" << endl;
+            result = scanf ("%d", &find_division);
+            while (getchar()!='\n');
+        }while (result!=1);
+    bool found1 = false;
+    
+    for (int i = 0; i < numbers; i++)
+    {
+        if (find_division==employees[i].division)
+        {
+            found1 = true;
+            cout << "Найдена информация о сотруднике из отдела №" << find_division << endl;
+            cout << "Cотрудник " << (i + 1) <<":"<< endl;
+            cout << "Фамилия: " << employees[i].surname << endl;
+            cout << "Имя: " << employees[i].name << endl;
+            cout << "Отчество: " << employees[i].patronymic << endl;
+            cout << "Должность: " << employees[i].position << endl;
+        }
+    }
+    if (found1==false)
+    {
+        cout << "Информация о введенном отделе не найдена"<< endl;
+    }
+    
+    /*Задание 2.
+    Вывести на экран данные обо всех сотрудниках старше 50 лет*/
+    
+    cout << "\nВывод информации о людях старше 50 лет"<< endl;
+    
+    bool found2 = false;
+    
+    for (int i = 0; i < numbers; i++)
+    {
+        int age=year-employees[i].bdate[2];
+        if ((age>51) || (age==51 && month>employees[i].bdate[1]) || (age==51 && month==employees[i].bdate[1] && day>=employees[i].bdate[0]))
+        {
+            found2 = true;
+            cout << "Cотрудник " << (i + 1) <<":"<< endl;
+            cout << "Фамилия: " << employees[i].surname << endl;
+            cout << "Имя: " << employees[i].name << endl;
+            cout << "Отчество: " << employees[i].patronymic << endl;
+            cout << "Дата рождения: " << employees[i].bdate[0] << "." << employees[i].bdate[1] << "." << employees[i].bdate[2] << endl;
+            cout << "Номер отдела: " << employees[i].division << endl;
+            cout << "Должность: " << employees[i].position <<  endl;
+        }
+    }
+    if (found2==false)
+    {
+        cout << "Людей старше 50 лет - нет"<< endl;
+    }
+    
+    delete[] employees;
+    return 0;
+}

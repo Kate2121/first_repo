@@ -1,0 +1,565 @@
+#include <string>
+#include "company.h"
+
+using namespace std;
+
+int main()
+{
+    int maximum=0, numbers=0, choice=0, find_division=0;
+    cout << "Введите максимальное количество сотрудников:" << endl;
+    while (!(cin >> maximum) || maximum <= 0)
+    {
+        cout << "Введите положительное число!" << endl;
+        cin.clear();
+        cin.ignore(256,'\n');
+    }
+    company myCompany(maximum);
+    while (choice < 1 || choice > 4)
+    {
+        
+        cout << "\nВыберите действие:\n1 - чтение из файла и вывод на экран\n2 - запись в файл\n3 - добавить сотрудника\n4 - удалить сотрудника" << endl;
+        cin >> choice;
+        cin.ignore();
+        if (cin.fail())
+        {
+            cout << "Введены некорректные данные!" << endl;
+            cin.clear();
+            cin.ignore(256, '\n');
+            choice = 0;
+        }
+        if (choice == 1)
+        {
+            ifstream file("output.txt");
+            myCompany.check_ifile(file,"output.txt");
+            numbers = myCompany.calculation_count() / 7;
+            if (numbers>maximum){
+                cout << "Людей в файле больше, чем введенное максимальное значение"<< endl;
+                cout << "\nЛюдей в файле: " <<  numbers <<endl;
+            }
+            else
+            {
+                employee emp;
+                while(file >> emp)
+                {
+                    cout << emp;
+                }
+            }
+        }
+        else if (choice == 2)
+        {
+            ofstream file("output.txt");
+            myCompany.check_ofile(file,"output.txt");
+            while ((numbers <= 0) || (cin.fail()) || (numbers>maximum))
+            {
+                cout << "Введите  количество сотрудников:" << endl;
+                cin >> numbers;
+                if (numbers <= 0)
+                {
+                    cout << "Введите число больше 0" << endl;
+                }
+                if (cin.fail())
+                {
+                    cin.clear();
+                    cin.ignore(256, '\n');
+                }
+                if (numbers>maximum){
+                cout << "Число сотрудников превышает максимальное значение!"<< endl;
+                }
+            }
+            myCompany.write_to_file("output.txt", numbers);
+        }
+        else if (choice == 3)
+        {
+            employee emp;
+            myCompany += emp;
+        }
+        else if (choice == 4){
+            employee emp;
+            myCompany -= emp;
+        }
+    }
+    cout << "Введите номер искомого отдела: ";
+    while (!(cin >> find_division) || find_division <= 0) 
+    {
+    cin.clear();
+    cin.ignore(256,'\n');
+    cout << "Введите положительное число!" << endl;
+    }
+    myCompany.find_divisions(find_division);
+    myCompany.find_people();
+    return 0;
+}
+
+
+
+
+
+
+
+
+#include <string>
+
+using namespace std;
+
+class employee
+{
+    private:
+        string surname;
+        string name;
+        string patronymic;
+        int bdate[3];
+        int division;
+        string position;
+    public:
+        void write_to(ofstream& outfile); 
+        void display();
+        
+        string get_surname(){return this -> surname;};
+        string get_name(){return this -> name;};
+        string get_patronymic(){return this -> patronymic;};
+        int *get_bdate(){return this -> bdate;};
+        int get_division(){return this -> division;};
+        string get_position(){return this -> position;};
+        
+        friend ostream& operator<<(ostream& outfile,const  employee& emp);
+        friend istream& operator>>(istream& file, employee& emp);
+        friend ofstream& operator<<(ofstream& outfile, const employee& emp);
+        friend ifstream& operator>>(ifstream& file, employee& emp);
+
+};
+
+
+
+
+
+
+
+
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <limits>
+#include <cstring>
+#include "employee.h"
+
+using namespace std;
+
+ofstream& operator<<(ofstream& outfile, const employee& emp)
+{
+    outfile << emp.surname << endl;
+    outfile << emp.name << endl;
+    outfile << emp.patronymic << endl;
+    outfile << emp.bdate[0] << "." << emp.bdate[1] << "." << emp.bdate[2] << endl;
+    outfile << emp.division << endl;
+    outfile << emp.position<< endl;
+    outfile <<"\n";
+    return outfile;
+}
+
+ifstream& operator>>(ifstream& file, employee& emp)
+{
+    
+    getline(file, emp.surname);
+    getline(file, emp.name);
+    getline(file, emp.patronymic);
+    char bdate_str[20];
+    file.getline(bdate_str, 20);
+    sscanf(bdate_str, "%d.%d.%d", &emp.bdate[0], &emp.bdate[1], &emp.bdate[2]);
+    file >> emp.division;
+    file.ignore();
+    getline(file, emp.position);
+    file.ignore();
+    return file;
+}
+
+ostream& operator<<(ostream& outfile,const employee& emp)
+{
+    outfile << "Фамилия: " << emp.surname << endl;
+    outfile << "Имя: " << emp.name << endl;
+    outfile << "Отчество: " << emp.patronymic << endl;
+    outfile << "Дата рождения: " << emp.bdate[0] << "." << emp.bdate[1] << "." << emp.bdate[2] << endl;
+    outfile << "Номер отдела: " << emp.division << endl;
+    outfile << "Должность: " << emp.position << "\n" << endl;
+    return outfile;
+}
+
+istream& operator>>(istream& file, employee& emp)
+{
+    getline(file, emp.surname);
+    getline(file, emp.name);
+    getline(file, emp.patronymic);
+    char bdate_str[20];
+    file.getline(bdate_str, 20);
+    sscanf(bdate_str, "%d.%d.%d", &emp.bdate[0], &emp.bdate[1], &emp.bdate[2]);
+    file >> emp.division;
+    file.ignore();
+    getline(file, emp.position);
+    file.ignore();
+    return file;
+}
+
+void employee::write_to(ofstream& outfile)
+{
+    
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    int year = ltm->tm_year + 1900;
+    int month = ltm->tm_mon + 1;
+    int day = ltm->tm_mday;
+    int result;
+
+    bool found1 = false;
+    bool found2 = false;
+    bool found3 = false;
+    string symbol = "*[]{}+=-&^:;/><$#@.,!?№%()'_";
+    symbol += '"';
+
+    do {
+        found1 = false;
+        cout << "Введите фамилию: ";
+        cin >> surname;
+        for (int i = 0; i < symbol.length(); i++) {
+            if (surname.find(symbol[i]) != string::npos) {
+                cout << "Фамилия содержит недопустимые символы" << endl;
+                found1 = true;
+            }
+        }
+    } while (found1);
+
+    do {
+        found2 = false;
+        cout << "Введите имя: ";
+        cin >> name;
+        for (int i = 0; i < symbol.length(); i++) {
+            if (name.find(symbol[i]) != string::npos) {
+                cout << "Имя содержит недопустимые символы" << endl;
+                found2 = true;
+            }
+        }
+    } while (found2);
+
+    do {
+        found3 = false;
+        cout << "Введите отчество: ";
+        cin >> patronymic;
+        for (int i = 0; i < symbol.length(); i++) {
+            if (patronymic.find(symbol[i]) != string::npos) {
+                cout << "Отчество содержит недопустимые символы" << endl;
+                found3 = true;
+            }
+        }
+    } while (found3);
+    
+    bool correct=false;
+    while (correct != true) 
+    {
+        cout << "Введите дату рождения в формате ДД.ММ.ГГГГ: ";
+        cin >> bdate[0];
+        cin.ignore(1, '.');
+        cin >> bdate[1];
+        cin.ignore(1, '.');
+        cin >> bdate[2];
+        if (bdate[0] < 1 || bdate[1] < 1 || bdate[1] > 12 || bdate[2] < 1 || bdate[2] > year || bdate[2]<1900 || (bdate[2] == year && bdate[1] > month) || (bdate[2] == year && bdate[1] == month && bdate[0] > day)) {
+            cout << "Введите корректные данные!" << endl;
+        } else if ((bdate[1] == 2 && bdate[2] % 4 != 0 && bdate[0] > 28) || (bdate[1] == 2 && bdate[2] % 4 == 0 && bdate[0] > 29)) {
+            cout << "Введите корректные данные!" << endl;
+        } else if ((bdate[1] == 1 || bdate[1] == 3 || bdate[1] == 5 || bdate[1] == 7 || bdate[1] == 8 || bdate[1] == 10 || bdate[1] == 12) && bdate[0] > 31) {
+            cout << "Введите корректные данные!" << endl;
+        } else if ((bdate[1] == 4 || bdate[1] == 6 || bdate[1] == 9 || bdate[1] == 11) && bdate[0] > 30) {
+            cout << "Введите корректные данные!" << endl;
+        }else {
+            correct = true;
+        }
+    }
+    cout << "Введите номер отдела: ";
+    while (!(cin >> division) || division <= 0)
+    {
+        cout << "Введите положительное число!" << endl;
+        cin.clear();
+        cin.ignore(256,'\n');
+    }
+    cout << "Введите должность: ";
+    cin >> position;
+    ofstream my_outfile("output.txt", ios::app);
+    if (!my_outfile)
+    {
+        cout << "Ошибка открытия файла " << endl;
+        exit(1);
+    }
+    outfile << *this;
+    my_outfile.close();
+}
+
+
+
+
+
+
+
+
+#include <string>
+#include <fstream>
+#include <iostream>
+#include "employee.h"
+
+using namespace std;
+
+class company
+{
+    private:
+        int max_number;
+        int numbers;
+        employee * employees;
+    public:
+        company(unsigned int maximum);
+        ~company();
+        
+        void operator +=(employee &emp);
+        void operator -=(employee &emp);
+        
+        void read_from_file(string filename);
+        void write_to_file(string filename, int numbers);
+        void find_divisions(int find_division);
+        void find_people();
+        
+        bool check_ifile(ifstream& file, string filename);
+        bool check_ofile(ofstream& file, string filename);
+        int calculation_count();
+};
+
+
+
+
+
+
+
+
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <string>
+#include <locale>
+#include "company.h"
+
+using namespace std;
+
+company::company(unsigned int maximum)
+{
+    max_number = maximum;
+    employees = new employee[max_number];
+    int numbers=0;
+    cout<<"Вызван конструктор класса"<<endl;
+    cout<<"Максимальное число сотрудников: "<<max_number<<endl;
+}
+
+company::~company()
+{
+    max_number = 0;
+    delete[] employees;
+    numbers = 0;
+    cout<<"\nВызван деструктор - память освобождена";
+}
+
+bool company::check_ifile(ifstream& file, string filename)
+{
+    if (!file)
+    {
+        cout << "Ошибка открытия файла " << filename << "!" << endl;
+        return false;
+    }
+    return true;
+}
+
+bool company::check_ofile(ofstream& file, string filename)
+{
+    if (!file)
+    {
+        cout << "Ошибка открытия файла " << filename << "!" << endl;
+        return false;
+    }
+    return true;
+}
+
+int company::calculation_count()
+{
+    ifstream infile("output.txt");
+    check_ifile(infile, "output.txt");
+    string line;
+    int count = 0;
+    while (getline(infile, line))
+    {
+        count++;
+    }
+    infile.clear(); 
+    infile.seekg(0, ios::beg);
+    return count;
+}
+
+void company::read_from_file(string filename)
+{
+    ifstream infile("output.txt");
+    check_ifile(infile, "output.txt");
+    
+    int count = calculation_count();
+    numbers = count / 7;
+    
+    for (int i = 0; i <  numbers; i++)
+    {
+        employee new_employee;
+        infile >> new_employee;
+        if ( numbers <= max_number)
+        {
+            employees[i] = new_employee;
+        }
+    }
+    infile.close();
+}
+
+void company::write_to_file(string filename, int numbers)
+{
+    ofstream outfile("output.txt");
+    check_ofile(outfile, "output.txt");
+    
+    for (int i = 0; i < numbers; i++)
+    {
+        employees[i].write_to(outfile); 
+    }
+    outfile.close();
+}
+
+void company::operator +=(employee &emp)
+{
+    ifstream infile("output.txt");
+    check_ifile(infile, "output.txt");
+    
+    int count = calculation_count();
+    int N = count / 7;
+    
+    ofstream outfile("output.txt", ios::app); 
+    check_ofile(outfile, "output.txt");
+    
+    cout << "Сотрудников в файле: " << N << endl;
+    if (N < max_number)
+    {
+        N++; 
+        
+        cout << "Добавление нового сотрудника" << endl;
+        emp.write_to(outfile);  
+    }
+    else
+    {
+        cout << "Достигнуто максимальное число сотрудников" << endl;
+    }
+    outfile.close();
+}
+
+void company::operator -=( employee &emp)
+{
+    ifstream infile("output.txt");
+    check_ifile(infile, "output.txt");
+    
+    int count = calculation_count();
+    numbers = count / 7;
+    string* employees = new string[numbers * 7];
+    
+    for (int i = 0; i < numbers * 7; i++)
+    {
+        getline(infile, employees[i]);
+    }
+    infile.close();
+    
+    int index;
+    cout << "Введите номер сотрудника, которого вы хотите удалить: " << endl;
+    cin >> index;
+    if (index < 1 || index > numbers)
+    {
+        delete[] employees;
+        cout << "Такого сотрудника нет!" << endl;
+        return;
+    }
+    index--;
+    for (int i = index * 7; i < (numbers - 1) * 7; i++)
+    {
+        employees[i] = employees[i + 7];
+    }
+    numbers--;
+
+    ofstream outfile("output.txt");
+    check_ofile(outfile, "output.txt");
+
+    for (int i = 0; i < numbers * 7; i++)
+    {
+        outfile << employees[i] << endl;
+    }
+
+    delete[] employees;
+    outfile.close();
+}
+
+void company::find_divisions(int find_division)
+{
+    ifstream infile("output.txt");
+    check_ifile(infile, "output.txt");
+    
+    int count = calculation_count();
+    numbers = count / 7;
+    employee* people = new employee[numbers];
+    
+    bool found = false;
+    for (int i = 0; i < numbers; i++)
+    {
+        infile >> people[i];
+        if (people[i].get_division() == find_division)
+        {
+            found = true;
+            cout << "Искомый отдел найден" << endl;
+            cout << people[i];
+        }
+    }
+    if (!found)
+    {
+        cout << "Информация о введенном отделе не найдена" << endl;
+    }
+    delete[] people;
+}
+
+void company::find_people()
+{
+    ifstream infile("output.txt");
+    check_ifile(infile, "output.txt");
+    
+    int count = calculation_count();
+    numbers = count / 7;
+    employee* people = new employee[numbers];
+    
+    for (int i = 0; i < numbers; i++)
+    {
+        infile >> people[i];
+    }
+    bool found = false;
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    int year = ltm->tm_year + 1900;
+    int month = ltm->tm_mon + 1;
+    int day = ltm->tm_mday;
+    for (int i = 0; i < numbers; i++)
+    {
+        int age = year - people[i].get_bdate()[2];
+        if ((age > 50) || (age == 50 && month > people[i].get_bdate()[1]) ||
+            (age == 50 && month == people[i].get_bdate()[1] && day >= people[i].get_bdate()[0]))
+        {
+            found = true;
+            cout << "\nЛюди старше 50 лет" << endl;
+            cout << people[i];
+        }
+    }
+    if (!found)
+    {
+        cout << "\nЛюдей старше 50 лет - нет" << endl;
+    }
+    delete[] people;
+}
+
+
+
+
