@@ -1,4 +1,4 @@
-b
+c2
 #include <iostream>
 #include <ctime>
 #include <locale>
